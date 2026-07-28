@@ -23,6 +23,7 @@ let highlights = [];        // rows for current chapter
 let checklist = {};         // "chapter:index" -> bool
 let pendingSel = null;
 let secTimer = null, secCount = 0;
+let PENDING = null;
 
 /* ---------------- toast ---------------- */
 let toastT;
@@ -47,14 +48,18 @@ $('#send-link').addEventListener('click', async () => {
   const name = $('#name').value.trim();
   const err = $('#gate-err');
   err.classList.add('hidden');
-  if (!email || !email.includes('@')) { err.textContent = 'Enter a valid email address so we can send your link.'; err.classList.remove('hidden'); return; }
-  const btn = $('#send-link'); btn.textContent = 'Sending...'; btn.disabled = true;
-  const { error } = await sb.auth.signInWithOtp({
+  if (!email || !email.includes('@')) { err.textContent = 'Enter your email so your progress and notes save to you.'; err.classList.remove('hidden'); return; }
+  const btn = $('#send-link'); btn.textContent = 'Opening...'; btn.disabled = true;
+  try { localStorage.setItem('bdp_email', email); localStorage.setItem('bdp_name', name); } catch (e) {}
+  PENDING = { email: email, full_name: name };
+  const { error } = await sb.auth.signInAnonymously();
+  if (!error) { btn.textContent = 'Open my copy'; btn.disabled = false; return; }
+  const otp = await sb.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.origin + window.location.pathname, data: { full_name: name } }
+    options: { emailRedirectTo: window.location.origin, data: { full_name: name } }
   });
   btn.textContent = 'Open my copy'; btn.disabled = false;
-  if (error) { err.textContent = error.message; err.classList.remove('hidden'); return; }
+  if (otp.error) { err.textContent = otp.error.message; err.classList.remove('hidden'); return; }
   $('#sent-to').textContent = 'Sent to ' + email;
   $('#gate-step-email').classList.add('hidden');
   $('#gate-step-sent').classList.remove('hidden');
@@ -70,9 +75,12 @@ async function onSignedIn(user) {
   USER = user;
   $('#gate').classList.add('hidden');
   $('#app').classList.remove('hidden');
-  await sb.from('book_readers').upsert({ id: user.id, email: user.email, last_seen_at: new Date().toISOString() }, { onConflict: 'id' });
+  let mail = user.email || (PENDING && PENDING.email) || '';
+  let nm = (PENDING && PENDING.full_name) || '';
+  try { mail = mail || localStorage.getItem('bdp_email') || ''; nm = nm || localStorage.getItem('bdp_name') || ''; } catch (e) {}
+  await sb.from('book_readers').upsert({ id: user.id, email: mail, full_name: nm, last_seen_at: new Date().toISOString() }, { onConflict: 'id' });
   const { data: adm } = await sb.from('book_admins').select('email');
-  IS_ADMIN = !!(adm || []).find(a => (a.email || '').toLowerCase() === (user.email || '').toLowerCase());
+  IS_ADMIN = !!(adm || []).find(a => (a.email || '').toLowerCase() === (mail || '').toLowerCase());
   if (IS_ADMIN) { $('#admin-btn').classList.remove('hidden'); $('#upload-btn').classList.remove('hidden'); }
   if (!BOOK.length) {
     await loadBook();
@@ -151,8 +159,9 @@ async function openChapter(i, isResume) {
     let tried = 0;
     img.onerror = () => {
       tried++;
-      if (tried === 1) { img.src = IMG_FALLBACK + rel; return; }
-      if (tried === 2) { img.src = IMG_FALLBACK + file; return; }
+      if (tried === 1) { img.src = file; return; }
+      if (tried === 2) { img.src = IMG_FALLBACK + rel; return; }
+      if (tried === 3) { img.src = IMG_FALLBACK + file; return; }
       const w = img.closest('.imgw'); if (w) w.style.display = 'none';
     };
     img.src = rel;

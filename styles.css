@@ -234,3 +234,6 @@ table.adm td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-alig
 .drop-mark{font-family:var(--sans);font-weight:700;font-size:15px;color:var(--ink);margin-bottom:4px}
 .up-track{height:6px;background:var(--paper-2);border-radius:3px;overflow:hidden;margin-top:14px}
 .up-fill{height:100%;width:0;background:var(--gold-lt);transition:width .2s}
+
+.dedication{text-align:center;font-style:italic;font-size:17px;line-height:1.7;color:var(--muted);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:26px 10px;margin:30px 0}
+.dedication p{margin:0}
