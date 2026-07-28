@@ -83,22 +83,22 @@ a{color:inherit}
 .scrim.show{opacity:1;pointer-events:auto}
 
 /* ---------- reading surface ---------- */
-.reader{padding-top:calc(var(--bar-h) + env(safe-area-inset-top));position:relative}
-.page{max-width:var(--maxw);margin:0 auto;padding:30px 22px 10px;font-size:18px;line-height:1.68}
-.spine{position:fixed;left:0;top:calc(var(--bar-h) + env(safe-area-inset-top));bottom:0;width:3px;background:var(--paper-2);z-index:20}
+
+
+
 .spine-fill{width:100%;height:0%;background:linear-gradient(180deg,var(--gold-lt),var(--gold));transition:height .1s linear}
 @media(min-width:900px){
-  .spine{left:calc(50% - var(--maxw)/2 - 26px);width:2px}
-  .page{padding:44px 0 10px}
+  
+  
 }
 
 /* book content styles */
-.page p{margin:0 0 17px}
-.page h2{font-family:var(--sans);font-weight:700;font-size:23px;line-height:1.25;letter-spacing:-.3px;color:var(--ink);margin:34px 0 14px}
-.page h3{font-family:var(--sans);font-weight:700;font-size:18px;color:var(--ink);margin:26px 0 10px}
-.page b{font-weight:700;color:var(--ink)}
-.page ul{padding-left:20px;margin:0 0 18px}
-.page li{margin-bottom:9px}
+.flow p{margin:0 0 17px}
+.flow h2{font-family:var(--sans);font-weight:700;font-size:23px;line-height:1.25;letter-spacing:-.3px;color:var(--ink);margin:34px 0 14px}
+.flow h3{font-family:var(--sans);font-weight:700;font-size:18px;color:var(--ink);margin:26px 0 10px}
+.flow b{font-weight:700;color:var(--ink)}
+.flow ul{padding-left:20px;margin:0 0 18px}
+.flow li{margin-bottom:9px}
 .chnum{font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:2.6px;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
 .chtitle{font-family:var(--serif);font-weight:700;font-size:clamp(31px,8vw,42px);line-height:1.06;letter-spacing:-.6px;color:var(--ink);margin:0 0 16px}
 .epi{font-style:italic;font-size:18px;line-height:1.5;color:var(--muted);border-left:3px solid var(--gold-lt);padding-left:16px;margin:0 0 30px}
@@ -180,8 +180,8 @@ mark.hl{background:linear-gradient(180deg,transparent 58%,rgba(245,185,66,.62) 5
 mark.hl.has-note{background:linear-gradient(180deg,transparent 58%,rgba(245,185,66,.62) 58%);border-bottom:2px solid var(--gold)}
 
 /* page end */
-.page-end{max-width:var(--maxw);margin:0 auto;padding:20px 22px calc(56px + env(safe-area-inset-bottom))}
-.pe-line{height:1px;background:var(--line);margin-bottom:22px}
+
+
 
 /* selection toolbar */
 .sel-bar{position:fixed;z-index:70;background:var(--ink);border-radius:10px;display:flex;overflow:hidden;box-shadow:0 8px 24px rgba(10,10,20,.28)}
@@ -229,11 +229,69 @@ table.adm td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-alig
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 .pill.gold{border-color:var(--gold);color:var(--gold-lt)}
-.drop{border:2px dashed var(--line);border-radius:var(--rad);padding:26px 16px;text-align:center;cursor:pointer;background:#fff;transition:border-color .15s,background .15s}
-.drop.over,.drop:hover{border-color:var(--gold);background:var(--gold-wash)}
-.drop-mark{font-family:var(--sans);font-weight:700;font-size:15px;color:var(--ink);margin-bottom:4px}
-.up-track{height:6px;background:var(--paper-2);border-radius:3px;overflow:hidden;margin-top:14px}
-.up-fill{height:100%;width:0;background:var(--gold-lt);transition:width .2s}
+
+
+
+
+
 
 .dedication{text-align:center;font-style:italic;font-size:17px;line-height:1.7;color:var(--muted);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:26px 10px;margin:30px 0}
 .dedication p{margin:0}
+
+/* ---------- the paged book ---------- */
+.reader{position:fixed;top:calc(var(--bar-h) + env(safe-area-inset-top));left:0;right:0;bottom:0;display:flex;flex-direction:column}
+.pager{position:relative;flex:1;overflow:hidden}
+.flow{position:absolute;top:22px;bottom:14px;column-fill:auto;transition:transform .26s cubic-bezier(.4,0,.2,1);font-size:17.5px;line-height:1.62}
+.spine{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--paper-2);z-index:5}
+.spine-fill{width:100%;height:0;background:linear-gradient(180deg,var(--gold-lt),var(--gold));transition:height .26s}
+.tapzone{position:absolute;top:0;bottom:0;width:32%;cursor:pointer;z-index:4}
+.tapzone.left{left:0}
+.tapzone.right{right:0;width:50%}
+.foot{flex:0 0 auto;padding:8px 20px calc(12px + env(safe-area-inset-bottom));text-align:center;border-top:1px solid var(--line);background:var(--paper)}
+.pgno{font-family:var(--sans);font-size:11.5px;letter-spacing:1.2px;color:var(--muted)}
+.end-note{font-family:var(--sans);font-size:12.5px;color:var(--gold);margin-bottom:5px}
+
+/* nothing may straddle a page edge */
+.flow h2,.flow h3,.chtitle,.pullq,.imgw,.defbox,.deftag,.aside,.script,.protip,.step,.resbox,
+table.abt,.anG,.anW,.partbox,.qa,.dict,.viz,.action-wrap,.dedication,ul.sum li,.flow li{break-inside:avoid;-webkit-column-break-inside:avoid}
+.flow h2,.flow h3,.chtitle{break-after:avoid}
+.imgw img{max-height:46vh;object-fit:contain;background:#fff}
+.imgw{margin:16px 0;border-radius:8px;overflow:hidden}
+.flow p{orphans:2;widows:2}
+
+/* the print-only pages, restored and sized for a screen */
+.book-title{display:block;font-family:var(--serif);font-weight:700;font-size:40px;line-height:1.05;text-align:center;margin:14vh 0 18px;color:var(--ink)}
+.book-sub{display:block;font-family:var(--serif);font-weight:600;font-size:18px;line-height:1.45;text-align:center;color:var(--gold);margin:0 0 12vh}
+.book-author{display:block;font-family:var(--sans);font-size:13px;letter-spacing:2.4px;text-transform:uppercase;text-align:center;color:var(--ink)}
+.book-role{display:block;font-family:var(--sans);font-size:10.5px;letter-spacing:2px;text-transform:uppercase;text-align:center;color:var(--muted);margin-top:8px}
+.toc{display:block;margin-top:10px}
+.toc .tr{display:flex;align-items:baseline;margin-bottom:11px;font-size:16px;padding:3px 4px;border-radius:6px}
+.toc .tr.tappable{cursor:pointer}
+.toc .tr.tappable:hover{background:var(--gold-wash)}
+.toc .tn{font-family:var(--sans);font-weight:700;color:var(--gold);flex:0 0 26px}
+.toc .tt{flex:0 0 auto}
+.toc .dots{flex:1;border-bottom:1px dotted #cfcabb;margin:0 8px}
+.toc .tp{font-family:var(--sans);font-weight:700;color:var(--ink);font-size:14px}
+.title-page{text-align:center}
+.copyright-page{font-family:var(--sans);font-size:12.5px;line-height:1.65;color:var(--muted);margin-top:8px}
+.copyright-page p{margin:0 0 9px}
+.filter{background:var(--gold-wash);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:15px 17px;margin:20px 0}
+.filter .fk{font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);margin-bottom:7px}
+.promise-lead,.lead,.wm-lead{font-size:20px;line-height:1.5;font-weight:600;color:var(--ink);margin-bottom:16px}
+hr.rule{border:none;border-top:1px solid var(--line);margin:24px 0}
+.guarantee{background:var(--ink);color:#fff;border-radius:14px;padding:20px;margin:22px 0;text-align:center}
+.guarantee .gt{font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold-lt);margin-bottom:10px}
+.guarantee .gm{font-family:var(--sans);font-weight:700;font-size:18px;line-height:1.4;margin-bottom:10px}
+.guarantee .gs{font-size:14.5px;line-height:1.55;color:#b8b8cc}
+.stepline{display:flex;gap:12px;margin-bottom:12px}
+.stepline .sn{flex:0 0 24px;height:24px;border-radius:50%;background:var(--gold-lt);color:var(--ink);display:grid;place-items:center;font-family:var(--sans);font-weight:700;font-size:12px}
+.stepline .st{flex:1;font-size:16.5px;line-height:1.5}
+.linkbox{background:var(--gold-wash);border:1px solid var(--gold);border-radius:10px;padding:16px;text-align:center;margin:20px 0}
+.linkbox .lk{font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.linkbox .lu{font-family:var(--sans);font-weight:700;font-size:15px;word-break:break-word}
+.ps{font-style:italic;color:var(--muted);font-size:15.5px;border-top:1px solid var(--line);padding-top:14px;margin-top:18px}
+ul.chk{list-style:none;padding:0}
+ul.chk li{position:relative;padding-left:24px;margin-bottom:9px}
+ul.chk li:before{content:"\2713";position:absolute;left:0;color:var(--gold);font-weight:700}
+.n{color:var(--gold)}
+.newwrap{display:contents}

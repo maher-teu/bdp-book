@@ -52,7 +52,6 @@
     <div class="bar-title" id="bar-title">The BDP Method</div>
     <div class="bar-right">
       <button id="notes-btn" class="pill" title="My highlights and notes">Notes</button>
-      <button id="upload-btn" class="pill gold hidden" title="Upload the book files">Add book files</button>
       <button id="admin-btn" class="pill hidden" title="Reader dashboard">Dashboard</button>
     </div>
   </header>
@@ -75,14 +74,17 @@
   <div id="scrim" class="scrim"></div>
 
   <!-- reading surface -->
-  <main class="reader" id="reader">
+  <main class="reader">
     <div class="spine"><div class="spine-fill" id="spine-fill"></div></div>
-    <article id="page" class="page"></article>
-    <div class="page-end" id="page-end">
-      <div class="pe-line"></div>
-      <button id="next-ch" class="btn btn-gold">Next chapter</button>
-      <p class="fine center" id="pe-note"></p>
+    <div id="pager" class="pager">
+      <div id="flow" class="flow"></div>
+      <div id="tap-prev" class="tapzone left" aria-label="Previous page"></div>
+      <div id="tap-next" class="tapzone right" aria-label="Next page"></div>
     </div>
+    <footer class="foot">
+      <div id="end-note" class="end-note hidden"></div>
+      <div class="pgno"><span id="pg-now">1</span> of <span id="pg-total">1</span></div>
+    </footer>
   </main>
 
   <!-- selection toolbar -->
@@ -120,21 +122,6 @@
       <button id="admin-close" class="icon-x">&times;</button>
     </div>
     <div id="admin-body" class="panel-body"></div>
-  </div>
-
-  <div id="upload-modal" class="modal hidden">
-    <div class="modal-card">
-      <div class="modal-title">Add the book files</div>
-      <p class="fine" style="margin-top:0">Open the folder called <b>BDP_Book_Files</b> from your download, select everything inside it, and drop it here. That is the book text plus the 45 pictures. You only ever do this once, and readers never see this button.</p>
-      <div id="up-drop" class="drop">
-        <div class="drop-mark">Drop the book files here</div>
-        <div class="fine center">or click to choose them</div>
-        <input id="up-input" type="file" accept="image/*,.json" multiple hidden>
-      </div>
-      <div class="up-track"><div id="up-bar" class="up-fill"></div></div>
-      <p class="fine center" id="up-txt"></p>
-      <div class="modal-actions"><button id="up-close" class="btn btn-ghost sm">Close</button></div>
-    </div>
   </div>
 
   <div id="toast" class="toast hidden"></div>
