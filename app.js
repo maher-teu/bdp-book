@@ -186,6 +186,7 @@ function layout() {
   flow.style.columnWidth = inner + 'px';
   flow.style.columnGap = gap + 'px';
   step = inner + gap;
+  document.documentElement.style.setProperty('--pageh', flow.clientHeight + 'px');
   pages = Math.max(1, Math.round(flow.scrollWidth / step));
   $('#pg-total').textContent = pages;
 }
@@ -196,7 +197,8 @@ function goTo(i) {
   $('#pg-now').textContent = page + 1;
   const p = pages > 1 ? page / (pages - 1) : 1;
   $('#spine-fill').style.height = (p * 100) + '%';
-  $('#tap-prev').style.opacity = (page === 0 && current === 0) ? 0.15 : 1;
+  $('#tap-prev').disabled = (page === 0 && current === 0);
+  $('#tap-next').disabled = (page === pages - 1 && current === BOOK.length - 1);
   const last = page === pages - 1;
   const note = $('#end-note');
   note.classList.toggle('hidden', !last);
@@ -247,6 +249,8 @@ function prevPage() {
 }
 $('#tap-prev').addEventListener('click', prevPage);
 $('#tap-next').addEventListener('click', nextPage);
+$('#zone-prev').addEventListener('click', prevPage);
+$('#zone-next').addEventListener('click', nextPage);
 document.addEventListener('keydown', e => {
   if (!$('#gate').classList.contains('hidden')) return;
   if (!$('#note-modal').classList.contains('hidden')) return;
@@ -259,7 +263,7 @@ $('#pager').addEventListener('touchend', e => {
   if (touchX === null) return;
   const dx = e.changedTouches[0].clientX - touchX;
   const dy = e.changedTouches[0].clientY - touchY;
-  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) { dx < 0 ? nextPage() : prevPage(); }
+  if (Math.abs(dx) > 38 && Math.abs(dx) > Math.abs(dy) * 1.2) { dx < 0 ? nextPage() : prevPage(); }
   touchX = null;
 }, { passive: true });
 window.addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(relayout, 200); });

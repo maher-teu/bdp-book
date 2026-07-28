@@ -78,12 +78,16 @@
     <div class="spine"><div class="spine-fill" id="spine-fill"></div></div>
     <div id="pager" class="pager">
       <div id="flow" class="flow"></div>
-      <div id="tap-prev" class="tapzone left" aria-label="Previous page"></div>
-      <div id="tap-next" class="tapzone right" aria-label="Next page"></div>
+      <div id="zone-prev" class="tapzone left"></div>
+      <div id="zone-next" class="tapzone right"></div>
     </div>
     <footer class="foot">
-      <div id="end-note" class="end-note hidden"></div>
-      <div class="pgno"><span id="pg-now">1</span> of <span id="pg-total">1</span></div>
+      <button id="tap-prev" class="navbtn" aria-label="Previous page">&#8249;</button>
+      <div class="footmid">
+        <div id="end-note" class="end-note hidden"></div>
+        <div class="pgno"><span id="pg-now">1</span> of <span id="pg-total">1</span></div>
+      </div>
+      <button id="tap-next" class="navbtn" aria-label="Next page">&#8250;</button>
     </footer>
   </main>
 
