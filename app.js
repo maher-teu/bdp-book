@@ -25,9 +25,10 @@ let USER = null, IS_ADMIN = false, PENDING = null;
 let current = 0;
 let progress = {}, highlights = [], checklist = {};
 let pendingSel = null;
-let secTimer = null, secCount = 0;
-let page = 0, pages = 1, step = 0;
+let secTimer = null, secCount = 0, secChapterId = null;
+let page = 0, pages = 1, pageDeck = [];
 let saveT, relayoutT, rsT;
+let openVersion = 0, opening = false;
 
 let toastT;
 function toast(msg) {
@@ -39,9 +40,22 @@ function toast(msg) {
 
 /* ---------------- auth ---------------- */
 async function init() {
-  const { data } = await sb.auth.getSession();
-  if (data.session) { await onSignedIn(data.session.user); }
-  sb.auth.onAuthStateChange((_e, s) => { if (s && !USER) onSignedIn(s.user); });
+  const { data, error } = await sb.auth.getSession();
+  if (!error && data.session) {
+    await onSignedIn(data.session.user);
+  } else {
+    revealGate();
+  }
+  sb.auth.onAuthStateChange((_e, s) => {
+    if (s && !USER) onSignedIn(s.user);
+    if (!s && !USER) revealGate();
+  });
+}
+
+function revealGate() {
+  $('#app').classList.add('hidden');
+  $('#gate').classList.remove('hidden');
+  document.body.classList.remove('booting');
 }
 
 $('#send-link').addEventListener('click', async () => {
@@ -81,7 +95,11 @@ async function onSignedIn(user) {
   IS_ADMIN = !!(adm || []).find(a => (a.email || '').toLowerCase() === (mail || '').toLowerCase());
   if (IS_ADMIN) $('#admin-btn').classList.remove('hidden');
   if (!BOOK.length) await loadBook();
-  if (!BOOK.length) { $('#flow').innerHTML = '<p class="empty">This copy is being set up. Check back shortly.</p>'; return; }
+  if (!BOOK.length) {
+    $('#flow').innerHTML = '<p class="empty">This copy is being set up. Check back shortly.</p>';
+    document.body.classList.remove('booting');
+    return;
+  }
   await loadProgress();
   await loadChecklist();
   buildChapterList();
@@ -92,7 +110,8 @@ async function onSignedIn(user) {
     const i = BOOK.findIndex(c => c.id === seen[0][0]);
     if (i > -1) resume = i;
   }
-  openChapter(resume, true);
+  await openChapter(resume, true);
+  document.body.classList.remove('booting');
 }
 
 /* ---------------- data ---------------- */
@@ -110,7 +129,7 @@ async function loadChecklist() {
 }
 async function loadHighlights(id) {
   const { data } = await sb.from('book_highlights').select('*').eq('user_id', USER.id).eq('chapter_id', id).order('created_at');
-  highlights = data || [];
+  return data || [];
 }
 function logEvent(event, chapter_id, meta) {
   if (!USER) return;
@@ -136,73 +155,269 @@ function buildChapterList() {
 }
 
 /* ---------------- render and paginate ---------------- */
-async function openChapter(i, isResume, toEnd) {
-  current = i;
+async function openChapter(i, isResume, toEnd, preserveRatio) {
+  if (opening || !BOOK[i]) return false;
+  opening = true;
+  const version = ++openVersion;
   const ch = BOOK[i];
-  await loadHighlights(ch.id);
   const flow = $('#flow');
-  flow.innerHTML = ch.html;
-  flow.style.transform = 'translateX(0px)';
+  flow.classList.add('is-loading');
+  setNavigationBusy(true);
 
-  flow.querySelectorAll('img').forEach(img => {
-    const rel = img.getAttribute('src');
-    const file = rel.split('/').pop();
-    let tried = 0;
-    img.onerror = () => {
-      tried++;
-      if (tried === 1) { img.src = file; return; }
-      if (tried === 2) { img.src = IMG_FALLBACK + rel; return; }
-      if (tried === 3) { img.src = IMG_FALLBACK + file; return; }
-      const w = img.closest('.imgw'); if (w) w.style.display = 'none';
-      relayoutSoon();
-    };
-    img.addEventListener('load', relayoutSoon);
-    img.src = rel;
-  });
+  clearTimeout(saveT);
+  if (BOOK[current] && pageDeck.length) saveProgress(BOOK[current].id);
 
-  transformSteps(flow, ch.id);
-  transformCTA(flow);
-  wireContents(flow);
-  applyHighlights(flow);
-  indexBlocks(flow);
+  try {
+    const chapterHighlights = await loadHighlights(ch.id);
+    if (version !== openVersion) return false;
 
-  $('#bar-title').textContent = ch.title;
-  buildChapterList();
-  layout();
+    const source = document.createElement('div');
+    source.innerHTML = ch.html;
+    source.querySelectorAll('.newwrap').forEach(w => w.replaceWith(...w.childNodes));
 
-  page = 0;
-  const saved = progress[ch.id];
-  if (toEnd) page = pages - 1;
-  else if (isResume && saved && saved.scroll_pct > 0.01 && saved.scroll_pct < 0.99) {
-    page = Math.min(pages - 1, Math.max(0, Math.round(saved.scroll_pct * (pages - 1))));
-    if (page > 0) toast('Back where you left off');
+    transformSteps(source, ch.id);
+    transformCTA(source);
+    wireContents(source);
+    indexBlocks(source);
+    applyHighlights(source, chapterHighlights);
+
+    await settleChapterLayout(source);
+    if (version !== openVersion) return false;
+
+    const builtPages = paginateSource(source);
+    if (version !== openVersion) return false;
+
+    current = i;
+    highlights = chapterHighlights;
+    pageDeck = builtPages;
+    pages = pageDeck.length;
+    $('#pg-total').textContent = pages;
+    $('#bar-title').textContent = ch.title;
+    buildChapterList();
+
+    let target = 0;
+    const saved = progress[ch.id];
+    if (toEnd) {
+      target = pages - 1;
+    } else if (typeof preserveRatio === 'number') {
+      target = Math.round(Math.max(0, Math.min(1, preserveRatio)) * (pages - 1));
+    } else if (isResume && saved && saved.scroll_pct > 0.01 && saved.scroll_pct < 0.99) {
+      target = Math.round(saved.scroll_pct * (pages - 1));
+      if (target > 0) toast('Back where you left off');
+    }
+
+    opening = false;
+    flow.classList.remove('is-loading');
+    goTo(target);
+    logEvent('chapter_open', ch.id);
+    startTimer(ch.id);
+    return true;
+  } catch (err) {
+    console.error('Could not open chapter', err);
+    flow.innerHTML = '<p class="empty">This chapter could not load. Please refresh and try again.</p>';
+    document.body.classList.remove('booting');
+    return false;
+  } finally {
+    if (version === openVersion) {
+      opening = false;
+      flow.classList.remove('is-loading');
+      setNavigationBusy(false);
+    }
   }
-  goTo(page);
-  logEvent('chapter_open', ch.id);
-  startTimer();
 }
 
-function relayoutSoon() { clearTimeout(relayoutT); relayoutT = setTimeout(relayout, 80); }
-function relayout() { const p = page; layout(); goTo(Math.min(p, pages - 1)); }
+function setNavigationBusy(busy) {
+  $('#pager').setAttribute('aria-busy', busy ? 'true' : 'false');
+  if (busy) {
+    $('#tap-prev').disabled = true;
+    $('#tap-next').disabled = true;
+  }
+}
 
-function layout() {
-  const pager = $('#pager'), flow = $('#flow');
-  const w = pager.clientWidth;
-  const inner = Math.min(w - 48, 620);
-  const gap = Math.max(48, w - inner);
-  flow.style.width = inner + 'px';
-  flow.style.left = Math.round((w - inner) / 2) + 'px';
-  flow.style.columnWidth = inner + 'px';
-  flow.style.columnGap = gap + 'px';
-  step = inner + gap;
-  document.documentElement.style.setProperty('--pageh', flow.clientHeight + 'px');
-  pages = Math.max(1, Math.round(flow.scrollWidth / step));
-  $('#pg-total').textContent = pages;
+async function settleChapterLayout(root) {
+  const images = Array.from(root.querySelectorAll('img')).map(loadBookImage);
+  const fonts = document.fonts
+    ? Promise.all([
+      document.fonts.load('400 18px Spectral'),
+      document.fonts.load('700 23px "Space Grotesk"')
+    ]).catch(() => {})
+    : Promise.resolve();
+  const timeout = new Promise(resolve => setTimeout(resolve, 5000));
+  await Promise.race([Promise.all([fonts, ...images]), timeout]);
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+}
+
+function loadBookImage(img) {
+  const rel = img.getAttribute('src') || '';
+  const file = rel.split('/').pop();
+  const candidates = [file, rel, IMG_FALLBACK + rel, IMG_FALLBACK + file].filter((v, i, a) => v && a.indexOf(v) === i);
+  img.loading = 'eager';
+  img.decoding = 'async';
+
+  return new Promise(resolve => {
+    let index = 0;
+    const tryNext = () => {
+      if (index >= candidates.length) {
+        const wrap = img.closest('.imgw');
+        if (wrap) wrap.remove();
+        resolve();
+        return;
+      }
+      img.src = candidates[index++];
+    };
+    img.onload = async () => {
+      try { await img.decode(); } catch (e) {}
+      resolve();
+    };
+    img.onerror = tryNext;
+    tryNext();
+  });
+}
+
+function paginateSource(source) {
+  const pager = $('#pager');
+  const flow = $('#flow');
+  const width = Math.max(260, Math.min(pager.clientWidth - 48, 620));
+  const height = Math.max(260, pager.clientHeight - 14);
+  const left = Math.round((pager.clientWidth - width) / 2);
+
+  flow.style.width = width + 'px';
+  flow.style.left = left + 'px';
+  document.documentElement.style.setProperty('--pageh', height + 'px');
+
+  const measure = document.createElement('div');
+  measure.className = 'flow flow-measure';
+  measure.style.width = width + 'px';
+  measure.style.height = height + 'px';
+  measure.style.left = left + 'px';
+  pager.appendChild(measure);
+
+  const deck = [];
+  let active = null;
+
+  const meaningful = node => node.nodeType === 1 || (node.nodeType === 3 && node.textContent.trim());
+  const hasContent = el => Array.from(el.childNodes).some(meaningful);
+  const isHeading = node => node && node.nodeType === 1 &&
+    (node.matches('h1,h2,h3,.chnum,.chtitle,.action-kicker,.action-title'));
+  const overflows = () => active && active.scrollHeight > active.clientHeight + 2;
+  const splittable = node => node && node.nodeType === 1 &&
+    !node.matches('p,h1,h2,h3,img,svg,.imgw,.step,.stepline,.guarantee,.linkbox,.giftbox') &&
+    Array.from(node.childNodes).filter(meaningful).length > 1;
+
+  function startPage() {
+    active = document.createElement('section');
+    active.className = 'book-page';
+    measure.appendChild(active);
+  }
+
+  function finishPage() {
+    if (!active) return;
+    active.remove();
+    if (hasContent(active)) deck.push(active);
+    active = null;
+  }
+
+  function splitAcrossPages(node) {
+    const children = Array.from(node.childNodes).filter(meaningful);
+    let shell = null;
+    let first = true;
+
+    const makeShell = () => {
+      shell = node.cloneNode(false);
+      if (!first) shell.classList.add('page-continuation');
+      first = false;
+      active.appendChild(shell);
+    };
+
+    makeShell();
+    children.forEach(child => {
+      shell.appendChild(child);
+      if (!overflows()) return;
+
+      shell.removeChild(child);
+      if (hasContent(shell)) {
+        finishPage();
+        startPage();
+        makeShell();
+      }
+      shell.appendChild(child);
+
+      if (overflows() && splittable(child)) {
+        shell.removeChild(child);
+        finishPage();
+        startPage();
+        addBlock(child);
+        if (!active) startPage();
+        makeShell();
+      }
+    });
+  }
+
+  function addBlock(node) {
+    if (!meaningful(node)) return;
+    if (node.nodeType === 1 && node.classList.contains('pagebreak')) {
+      if (active && hasContent(active)) finishPage();
+      if (!active) startPage();
+      return;
+    }
+    if (!active) startPage();
+
+    active.appendChild(node);
+    if (!overflows()) return;
+    active.removeChild(node);
+
+    const children = Array.from(active.childNodes).filter(meaningful);
+    const trailing = children[children.length - 1];
+    let carriedHeading = null;
+    if (isHeading(trailing) && children.length > 1) {
+      carriedHeading = trailing;
+      active.removeChild(trailing);
+    }
+
+    if (hasContent(active)) finishPage();
+    else { active.remove(); active = null; }
+    startPage();
+    if (carriedHeading) active.appendChild(carriedHeading);
+    active.appendChild(node);
+
+    if (!overflows()) return;
+    active.removeChild(node);
+    if (splittable(node)) {
+      splitAcrossPages(node);
+    } else {
+      active.appendChild(node);
+      active.classList.add('page-overflow');
+    }
+  }
+
+  startPage();
+  Array.from(source.childNodes).forEach(addBlock);
+  finishPage();
+  measure.remove();
+
+  if (!deck.length) {
+    const empty = document.createElement('section');
+    empty.className = 'book-page';
+    deck.push(empty);
+  }
+  return deck;
+}
+
+function relayoutSoon() {
+  clearTimeout(relayoutT);
+  relayoutT = setTimeout(relayout, 180);
+}
+
+function relayout() {
+  if (opening || !BOOK[current]) return;
+  const ratio = pages > 1 ? page / (pages - 1) : 0;
+  openChapter(current, false, false, ratio);
 }
 
 function goTo(i) {
+  if (opening || !pageDeck.length) return;
   page = Math.max(0, Math.min(pages - 1, i));
-  $('#flow').style.transform = 'translateX(' + (-page * step) + 'px)';
+  $('#flow').replaceChildren(pageDeck[page]);
   $('#pg-now').textContent = page + 1;
   const p = pages > 1 ? page / (pages - 1) : 1;
   $('#spine-fill').style.height = (p * 100) + '%';
@@ -230,29 +445,39 @@ function markProgress(p) {
     updated_at: new Date().toISOString()
   });
   clearTimeout(saveT);
-  saveT = setTimeout(saveProgress, 800);
+  saveT = setTimeout(() => saveProgress(id), 800);
 }
-async function saveProgress() {
-  if (!USER || !BOOK[current]) return;
-  const id = BOOK[current].id, p = progress[id];
+async function saveProgress(id) {
+  if (!USER) return;
+  id = id || secChapterId || (BOOK[current] && BOOK[current].id);
+  const p = id && progress[id];
   if (!p) return;
   const was = p._done;
+  const secondsToAdd = secChapterId === id ? secCount : 0;
+  if (secondsToAdd) secCount = 0;
   await sb.from('book_progress').upsert({
     user_id: USER.id, chapter_id: id, scroll_pct: p.scroll_pct, furthest_pct: p.furthest_pct,
-    completed: p.completed, seconds_spent: (p.seconds_spent || 0) + secCount, updated_at: new Date().toISOString()
+    completed: p.completed, seconds_spent: (p.seconds_spent || 0) + secondsToAdd, updated_at: new Date().toISOString()
   }, { onConflict: 'user_id,chapter_id' });
-  p.seconds_spent = (p.seconds_spent || 0) + secCount; secCount = 0;
+  p.seconds_spent = (p.seconds_spent || 0) + secondsToAdd;
   if (p.completed && !was) { p._done = true; logEvent('chapter_complete', id); }
   buildChapterList();
 }
-function startTimer() { clearInterval(secTimer); secTimer = setInterval(() => { if (!document.hidden) secCount++; }, 1000); }
+function startTimer(id) {
+  clearInterval(secTimer);
+  secChapterId = id;
+  secCount = 0;
+  secTimer = setInterval(() => { if (!document.hidden) secCount++; }, 1000);
+}
 
 /* ---------------- turning pages ---------------- */
 function nextPage() {
+  if (opening) return;
   if (page < pages - 1) return goTo(page + 1);
   if (current < BOOK.length - 1) openChapter(current + 1);
 }
 function prevPage() {
+  if (opening) return;
   if (page > 0) return goTo(page - 1);
   if (current > 0) openChapter(current - 1, false, true);
 }
@@ -276,6 +501,24 @@ $('#pager').addEventListener('touchend', e => {
 window.addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(relayout, 200); });
 
 /* ---------------- in page bits ---------------- */
+function wireContents(root) {
+  root.querySelectorAll('.toc .tr').forEach(row => {
+    const label = (row.querySelector('.tt')?.textContent || '').trim().toLowerCase();
+    let index = BOOK.findIndex(c => c.title.replace(/^\d+\.\s*/, '').toLowerCase() === label);
+    if (label === 'the promise' || label === 'how to read this book') index = 0;
+    if (label === 'the bdp dictionary' || label === 'questions readers ask') index = BOOK.length - 1;
+    if (index < 0) return;
+    row.classList.add('tappable');
+    row.setAttribute('role', 'button');
+    row.setAttribute('tabindex', '0');
+    const open = () => { if (!opening) openChapter(index); };
+    row.addEventListener('click', open);
+    row.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+    });
+  });
+}
+
 function transformSteps(root, chapterId) {
   root.querySelectorAll('.step').forEach((el, idx) => {
     const key = chapterId + ':' + idx;
@@ -330,9 +573,9 @@ function transformCTA(root) {
 function indexBlocks(root) { root.querySelectorAll('p,li,.pb,.dd,.st').forEach((el, i) => el.dataset.bi = i); }
 
 /* ---------------- highlights ---------------- */
-function applyHighlights(root) {
+function applyHighlights(root, rows) {
   const blocks = Array.from(root.querySelectorAll('p,li,.pb,.dd,.st'));
-  highlights.forEach(h => {
+  (rows || highlights).forEach(h => {
     const el = blocks[h.block_index]; if (!el) return;
     const i = el.textContent.indexOf(h.quote); if (i === -1) return;
     highlightRange(el, i, h.quote.length, h);
@@ -394,8 +637,7 @@ async function saveHighlight(sel, note) {
   const { data, error } = await sb.from('book_highlights').insert(row).select().single();
   if (error) { toast('Could not save that one'); return; }
   highlights.push(data);
-  const blocks = Array.from($('#flow').querySelectorAll('p,li,.pb,.dd,.st'));
-  const el = blocks[sel.block_index];
+  const el = $('#flow').querySelector('[data-bi="' + sel.block_index + '"]');
   if (el) { const i = el.textContent.indexOf(sel.quote); if (i > -1) highlightRange(el, i, sel.quote.length, data); }
   toast(note ? 'Note saved' : 'Highlighted');
   logEvent(note ? 'note_added' : 'highlight_added', BOOK[current].id);
@@ -436,7 +678,7 @@ async function openNotesPanel(focusId) {
   body.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
     await sb.from('book_highlights').delete().eq('id', b.dataset.del);
     openNotesPanel();
-    if (BOOK[current]) { await loadHighlights(BOOK[current].id); openChapter(current); }
+    if (BOOK[current]) openChapter(current);
   }));
   body.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => {
     const i = BOOK.findIndex(c => c.id === b.dataset.go);
