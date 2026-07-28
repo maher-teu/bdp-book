@@ -13,7 +13,7 @@
   --rad:10px;
   --serif:'Spectral',Georgia,serif;
   --sans:'Space Grotesk',-apple-system,Segoe UI,sans-serif;
-  --bar-h:54px;
+  --bar-h:44px;
   --maxw:660px;
 }
 *{box-sizing:border-box}
@@ -52,10 +52,10 @@ a{color:inherit}
 
 /* ---------- top bar ---------- */
 .app{min-height:100dvh}
-.bar{position:fixed;top:0;left:0;right:0;height:var(--bar-h);background:rgba(18,18,31,.97);color:#efeee8;display:flex;align-items:center;gap:12px;padding:0 12px;z-index:40;padding-top:env(safe-area-inset-top)}
+.bar{position:fixed;top:0;left:0;right:0;height:var(--bar-h);background:rgba(18,18,31,.97);color:#efeee8;display:flex;align-items:center;gap:10px;padding:0 10px;z-index:40;padding-top:env(safe-area-inset-top)}
 .bar-title{flex:1;font-family:var(--sans);font-size:13.5px;font-weight:500;color:#c9c8d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar-right{display:flex;gap:7px}
-.pill{background:transparent;border:1px solid #3a3a52;color:#c9c8d6;border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:500}
+.pill{background:transparent;border:1px solid #3a3a52;color:#c9c8d6;border-radius:999px;padding:4px 11px;font-size:12px;font-weight:500}
 .pill:hover{border-color:var(--gold);color:var(--gold-lt)}
 .icon-btn{width:34px;height:34px;background:transparent;border:none;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:0 6px}
 .icon-btn span{display:block;height:2px;background:#c9c8d6;border-radius:2px}
@@ -253,7 +253,8 @@ table.adm td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-alig
 
 /* nothing may straddle a page edge */
 .flow h2,.flow h3,.chtitle,.pullq,.imgw,.defbox,.deftag,.aside,.script,.protip,.step,.resbox,
-table.abt,.anG,.anW,.partbox,.qa,.dict,.viz,.action-wrap,.dedication,ul.sum li,.flow li{break-inside:avoid;-webkit-column-break-inside:avoid}
+table.abt,.anG,.anW,.partbox,.qa,.dict,.viz,.action-wrap,.dedication,ul.sum li,.flow li,
+.filter,.guarantee,.linkbox,.giftbox,.stepline,.ritem{break-inside:avoid;-webkit-column-break-inside:avoid}
 .flow h2,.flow h3,.chtitle{break-after:avoid}
 .imgw img{max-height:46vh;object-fit:contain;background:#fff}
 .imgw{margin:16px 0;border-radius:8px;overflow:hidden}
@@ -301,7 +302,7 @@ ul.chk li:before{content:"\2713";position:absolute;left:0;color:var(--gold);font
 
 /* front matter pages, each one alone and centred like the PDF */
 .title-page,.copyright-page,.dedication{
-  min-height:calc(var(--pageh, 70vh) - 8px);
+  min-height:calc(var(--pageh, 70vh) * 0.9);
   display:flex;flex-direction:column;justify-content:center;break-inside:avoid}
 .title-page{text-align:center}
 .title-page .book-title{margin:0 0 20px;font-size:clamp(34px,9vw,46px)}
@@ -314,19 +315,29 @@ ul.chk li:before{content:"\2713";position:absolute;left:0;color:var(--gold);font
 
 /* ---------- footer with real buttons ---------- */
 .foot{flex:0 0 auto;display:flex;align-items:center;gap:8px;
-  padding:5px 10px calc(5px + env(safe-area-inset-bottom));
+  padding:3px 8px calc(3px + env(safe-area-inset-bottom));
   border-top:1px solid var(--line);background:var(--paper)}
 .footmid{flex:1;text-align:center;min-width:0}
 .pgno{font-family:var(--sans);font-size:11.5px;letter-spacing:1.1px;color:var(--muted)}
 .end-note{font-family:var(--sans);font-size:11.5px;color:var(--gold);margin-bottom:1px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.navbtn{flex:0 0 auto;width:46px;height:38px;border:1px solid var(--line);background:#fff;
+.navbtn{flex:0 0 auto;width:44px;height:32px;border:1px solid var(--line);background:#fff;
   border-radius:9px;font-size:22px;line-height:1;color:var(--ink);display:grid;place-items:center}
 .navbtn:hover{border-color:var(--gold);color:var(--gold)}
 .navbtn:disabled{opacity:.28}
-.tapzone{position:absolute;top:0;bottom:0;width:26%;cursor:pointer;z-index:4}
-.tapzone.left{left:0}
-.tapzone.right{right:0;width:34%}
+
+
+
 
 /* reclaim the wasted space at the bottom of the phone */
-.flow{top:14px;bottom:6px}
+.flow{top:10px;bottom:4px}
+
+/* the free gift, standing on its own */
+.giftbox{background:var(--gold-wash);border:1.5px solid var(--gold);border-radius:14px;padding:16px 17px;margin:18px 0 6px}
+.gifthead{display:flex;align-items:center;gap:8px;font-family:var(--sans);font-weight:700;font-size:13px;
+  letter-spacing:1.3px;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
+.giftbox .ctaline{margin:0;padding:0;border:none;color:var(--text);font-size:15px;line-height:1.55}
+.giftbox .cta-btn{margin-top:13px}
+.reslink{display:inline-block;margin-top:7px;background:var(--gold-lt);color:var(--ink);
+  font-family:var(--sans);font-weight:700;font-size:13px;padding:7px 14px;border-radius:8px;text-decoration:none}
+.ritem .reslink{margin-top:8px}

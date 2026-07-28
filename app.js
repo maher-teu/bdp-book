@@ -2,6 +2,15 @@
 const SUPABASE_URL = 'https://hsyknuzpbpxrbdplurlo.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZQX1vuget_zIt15MtTLC0w_4SDSaN-u';
 const CTA_URL = 'https://calendar.app.google/FMKLkr5dQe6aHAyo8';
+const RESOURCE_LINKS = {
+  'The Escape Calculator': 'https://docs.google.com/spreadsheets/d/1_KcYHQr35TUV-EbXNrBwgt18K-89muoybA4kgBdutpc/edit?usp=sharing',
+  'The Life Design App': 'https://web-production-3b1d2.up.railway.app/',
+  'Free CRM': 'https://docs.google.com/spreadsheets/d/1yTx98a8oGZERWmzbAK1PcCqX7Iluo7gHDHgCjPscDio/edit?usp=sharing',
+  'The Hook Bank': 'https://docs.google.com/document/d/13z8gi9VC3ySOnn8ssX3N8ntHUTqA8lRY4KMd5u1BYaY/edit?usp=sharing',
+  'The First Posts Pack': 'https://docs.google.com/document/d/1YODx1dSwdJw95Lfq4G8cX2bMrlyl63F9WlyD70Ly1qA/edit?usp=sharing',
+  'The Daily Habit Tracker': 'https://docs.google.com/spreadsheets/d/1zI3fey-5nAxD2uI3eelq8Z5pqi6Cq5NJMXwfIs0YmZk/edit?usp=sharing',
+  'Fathom': 'https://www.fathom.ai/'
+};
 const IMG_FALLBACK = 'https://hsyknuzpbpxrbdplurlo.supabase.co/storage/v1/object/public/book-images/';
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -249,8 +258,6 @@ function prevPage() {
 }
 $('#tap-prev').addEventListener('click', prevPage);
 $('#tap-next').addEventListener('click', nextPage);
-$('#zone-prev').addEventListener('click', prevPage);
-$('#zone-next').addEventListener('click', nextPage);
 document.addEventListener('keydown', e => {
   if (!$('#gate').classList.contains('hidden')) return;
   if (!$('#note-modal').classList.contains('hidden')) return;
@@ -289,28 +296,37 @@ function transformSteps(root, chapterId) {
   });
 }
 function transformCTA(root) {
-  root.querySelectorAll('.ctaline').forEach(el => {
-    el.innerHTML = el.innerHTML.replace(/<b>Book it here:[^<]*<\/b>/i, '');
+  root.querySelectorAll('.resbox').forEach(box => {
+    box.querySelectorAll('.rn').forEach(nameEl => {
+      const url = RESOURCE_LINKS[nameEl.textContent.trim()];
+      if (!url) return;
+      const a = document.createElement('a');
+      a.className = 'reslink'; a.href = url; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = 'Open it';
+      a.addEventListener('click', e => { e.stopPropagation(); logEvent('resource_click', BOOK[current].id, { name: nameEl.textContent.trim() }); });
+      (nameEl.parentElement.classList.contains('ritem') ? nameEl.parentElement : box).appendChild(a);
+    });
+    const line = box.querySelector('.ctaline');
+    if (!line) return;
+    line.remove();
+    line.innerHTML = line.innerHTML.replace(/<span class="lnk"[^>]*>.*?<\/span>/i, '')
+      .replace(/<b>Book it here[^<]*<\/b>/i, '');
+    const gift = document.createElement('div');
+    gift.className = 'giftbox';
+    gift.innerHTML = '<div class="gifthead">' +
+      '<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">' +
+      '<path fill="currentColor" d="M20 7h-2.2a3 3 0 0 0-.5-3.5A3 3 0 0 0 12 4a3 3 0 0 0-5.3-.5A3 3 0 0 0 6.2 7H4a1 1 0 0 0-1 1v3h9V8h0v3h9V8a1 1 0 0 0-1-1Zm-6.6-2a1 1 0 1 1 1.4 1.4c-.4.4-1.2.5-2 .6.1-.8.2-1.6.6-2ZM8.6 5a1 1 0 0 1 1.4 0c.4.4.5 1.2.6 2-.8-.1-1.6-.2-2-.6A1 1 0 0 1 8.6 5ZM4 13v7a1 1 0 0 0 1 1h6v-8H4Zm9 8h6a1 1 0 0 0 1-1v-7h-7v8Z"/></svg>' +
+      '<span>Collect your free gift</span></div>';
+    gift.appendChild(line);
     const a = document.createElement('a');
     a.className = 'cta-btn'; a.href = CTA_URL; a.target = '_blank'; a.rel = 'noopener';
     a.textContent = 'Book your free advisory session';
     a.addEventListener('click', e => { e.stopPropagation(); logEvent('cta_click', BOOK[current].id); });
-    el.appendChild(a);
+    gift.appendChild(a);
+    box.parentElement.insertBefore(gift, box.nextSibling);
   });
 }
-function wireContents(root) {
-  const ids = ['promise', 'promise', 'ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'ch7', 'ch8', 'ch9', 'extras', 'extras', 'extras'];
-  root.querySelectorAll('.toc .tr').forEach((row, i) => {
-    const target = ids[i];
-    if (!target) return;
-    row.classList.add('tappable');
-    row.addEventListener('click', e => {
-      e.stopPropagation();
-      const j = BOOK.findIndex(c => c.id === target);
-      if (j > -1) openChapter(j);
-    });
-  });
-}
+
 function indexBlocks(root) { root.querySelectorAll('p,li,.pb,.dd,.st').forEach((el, i) => el.dataset.bi = i); }
 
 /* ---------------- highlights ---------------- */
