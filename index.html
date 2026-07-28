@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The BDP Method</title>
+<meta name="description" content="How anyone can make their first $5,000 to $20,000 a month online, using AI and a scientifically proven method.">
+<meta name="theme-color" content="#12121f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ AUTH GATE ============ -->
+<div id="gate" class="gate">
+  <div class="gate-inner">
+    <div class="gate-mark">TEU</div>
+    <h1 class="gate-title">The BDP&nbsp;Method</h1>
+    <p class="gate-sub">How anyone can make their first $5,000 to $20,000 a month online, using AI and a scientifically proven method.</p>
+    <p class="gate-by">Maher Hmidan &middot; Founder of The Entrepreneurship University</p>
+
+    <div class="gate-card">
+      <div id="gate-step-email">
+        <label class="lbl" for="email">Your email</label>
+        <input id="email" class="inp" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com">
+        <label class="lbl" for="name" style="margin-top:14px">Your first name</label>
+        <input id="name" class="inp" type="text" autocomplete="given-name" placeholder="Optional">
+        <button id="send-link" class="btn btn-gold">Open my copy</button>
+        <p class="fine">We send you a one time link. No password to remember. Your highlights, notes, and progress save to your copy.</p>
+      </div>
+      <div id="gate-step-sent" class="hidden">
+        <div class="sent-mark">Check your email</div>
+        <p class="fine" id="sent-to"></p>
+        <p class="fine">Open the link on this device and your copy opens straight to where you left off. It can take a minute to arrive, and it sometimes lands in promotions.</p>
+        <button id="back-to-email" class="btn btn-ghost">Use a different email</button>
+      </div>
+      <div id="gate-err" class="err hidden"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="app hidden">
+
+  <!-- top bar -->
+  <header class="bar">
+    <button id="menu-btn" class="icon-btn" aria-label="Chapters">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="bar-title" id="bar-title">The BDP Method</div>
+    <div class="bar-right">
+      <button id="notes-btn" class="pill" title="My highlights and notes">Notes</button>
+      <button id="upload-btn" class="pill gold hidden" title="Upload the book files">Add book files</button>
+      <button id="admin-btn" class="pill hidden" title="Reader dashboard">Dashboard</button>
+    </div>
+  </header>
+
+  <!-- chapter drawer -->
+  <nav id="drawer" class="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <div class="drawer-eyebrow">Your copy</div>
+      <div class="drawer-progress">
+        <div class="dp-num" id="overall-pct">0%</div>
+        <div class="dp-lbl">of the book read</div>
+      </div>
+    </div>
+    <ul id="chapter-list" class="chapters"></ul>
+    <div class="drawer-foot">
+      <a class="btn btn-gold sm" href="https://calendar.app.google/FMKLkr5dQe6aHAyo8" target="_blank" rel="noopener" data-cta="drawer">Book a free advisory session</a>
+      <button id="signout" class="btn btn-ghost sm">Sign out</button>
+    </div>
+  </nav>
+  <div id="scrim" class="scrim"></div>
+
+  <!-- reading surface -->
+  <main class="reader" id="reader">
+    <div class="spine"><div class="spine-fill" id="spine-fill"></div></div>
+    <article id="page" class="page"></article>
+    <div class="page-end" id="page-end">
+      <div class="pe-line"></div>
+      <button id="next-ch" class="btn btn-gold">Next chapter</button>
+      <p class="fine center" id="pe-note"></p>
+    </div>
+  </main>
+
+  <!-- selection toolbar -->
+  <div id="sel-bar" class="sel-bar hidden">
+    <button data-act="highlight">Highlight</button>
+    <button data-act="note">Add note</button>
+  </div>
+
+  <!-- note composer -->
+  <div id="note-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-title">Add a note</div>
+      <blockquote id="note-quote"></blockquote>
+      <textarea id="note-text" class="inp ta" placeholder="What does this mean for you?"></textarea>
+      <div class="modal-actions">
+        <button id="note-cancel" class="btn btn-ghost sm">Cancel</button>
+        <button id="note-save" class="btn btn-gold sm">Save note</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- notes panel -->
+  <div id="notes-panel" class="panel hidden">
+    <div class="panel-head">
+      <div class="panel-title">Highlights and notes</div>
+      <button id="notes-close" class="icon-x">&times;</button>
+    </div>
+    <div id="notes-body" class="panel-body"></div>
+  </div>
+
+  <!-- admin dashboard -->
+  <div id="admin-panel" class="panel wide hidden">
+    <div class="panel-head">
+      <div class="panel-title">Readers</div>
+      <button id="admin-close" class="icon-x">&times;</button>
+    </div>
+    <div id="admin-body" class="panel-body"></div>
+  </div>
+
+  <div id="upload-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-title">Add the book files</div>
+      <p class="fine" style="margin-top:0">Open the folder called <b>BDP_Book_Files</b> from your download, select everything inside it, and drop it here. That is the book text plus the 45 pictures. You only ever do this once, and readers never see this button.</p>
+      <div id="up-drop" class="drop">
+        <div class="drop-mark">Drop the book files here</div>
+        <div class="fine center">or click to choose them</div>
+        <input id="up-input" type="file" accept="image/*,.json" multiple hidden>
+      </div>
+      <div class="up-track"><div id="up-bar" class="up-fill"></div></div>
+      <p class="fine center" id="up-txt"></p>
+      <div class="modal-actions"><button id="up-close" class="btn btn-ghost sm">Close</button></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
