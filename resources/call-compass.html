@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<title>The Call Compass | TEU</title>
+<style>
+  :root{
+    --ink:#12121f; --card:#1a1a2e; --card2:#20203a; --line:#2a2a44;
+    --gold:#f5b942; --goldd:#c88a04; --txt:#eaeaf4; --mut:#9a9ab0;
+    --say:#ffd782; --red:#ff8a6b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-text-size-adjust:100%;}
+  body{
+    font-family:'Helvetica Neue',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+    background:radial-gradient(1100px 500px at 50% -8%,#1c1c33,#0d0d18);
+    color:var(--txt); line-height:1.5; padding:20px 16px 40px; min-height:100vh;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header{text-align:center;margin-bottom:22px;}
+  header h1{font-size:clamp(26px,7vw,38px);font-weight:800;letter-spacing:.5px;line-height:1.05;}
+  header .sub{color:var(--gold);font-style:italic;font-size:clamp(13px,3.6vw,15px);margin-top:8px;}
+  header .rule{color:var(--red);font-weight:700;font-size:clamp(13px,3.6vw,15px);margin-top:10px;
+    background:rgba(255,138,107,.08);border:1px solid rgba(255,138,107,.25);border-radius:12px;padding:10px 14px;}
+
+  .step{display:flex;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:16px 16px 16px 14px;margin-bottom:12px;position:relative;overflow:hidden;}
+  .step::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--gold),var(--goldd));}
+  .num{flex:0 0 40px;height:40px;border-radius:50%;background:#12121f;border:2px solid var(--gold);
+    color:var(--gold);font-size:19px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .body{flex:1;min-width:0;}
+  .headrow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+  .headrow h3{font-size:clamp(16px,4.4vw,18px);font-weight:800;color:#fff;line-height:1.2;}
+  .headrow h3 .arw{color:var(--gold);font-weight:800;}
+  .tag{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--goldd);background:rgba(245,185,66,.12);
+    border:1px solid rgba(245,185,66,.3);border-radius:20px;padding:4px 11px;text-align:center;line-height:1.3;
+    max-width:140px;}
+  .body p{font-size:clamp(13.5px,3.7vw,15px);color:#d2d2e0;margin-top:7px;}
+  .body p b{color:var(--say);font-weight:700;}
+
+  .boxes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:32px;}
+  .box{border-radius:16px;padding:18px 18px 20px;}
+  .box.dark{background:#12121f;border:1px solid var(--line);}
+  .box.amber{background:linear-gradient(160deg,rgba(245,185,66,.14),rgba(245,185,66,.04));border:1px solid rgba(245,185,66,.3);}
+  .box .bt{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;}
+  .box.dark ul{list-style:none;}
+  .box.dark li{font-size:clamp(13.5px,3.7vw,14.5px);color:#d2d2e0;padding-left:18px;position:relative;margin:9px 0;}
+  .box.dark li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:var(--gold);}
+  .box.amber .killer{font-size:clamp(19px,5.5vw,23px);font-weight:800;color:#fff;text-align:center;margin:6px 0 10px;}
+  .box.amber .kt{font-size:clamp(13px,3.6vw,14px);color:#d8c9a2;text-align:center;line-height:1.5;}
+
+  footer{text-align:center;color:#55556a;font-size:12px;margin-top:30px;letter-spacing:.5px;}
+
+  @media (max-width:600px){
+    body{padding:16px 12px 32px;}
+    .boxes{grid-template-columns:1fr;margin-top:26px;}
+    .tag{max-width:none;flex-basis:100%;text-align:left;margin-top:2px;}
+    .num{flex-basis:36px;height:36px;font-size:17px;}
+    .step{gap:12px;padding:14px 14px 14px 13px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>THE CALL COMPASS</h1>
+    <div class="sub">Your map for the intro call. Follow the arrows. They talk 70%, you talk 30%.</div>
+    <div class="rule">The intro call has ONE job: find the real problem and book the demo. You do not pitch here.</div>
+  </header>
+
+  <div class="step">
+    <div class="num">1</div>
+    <div class="body">
+      <div class="headrow"><h3>Small Talk <span class="arw">&rarr;</span> lower the guard</h3><div class="tag">30 to 60 sec</div></div>
+      <p>Where are you based? How's the day? Keep it short, then take the wheel: <b>"Cool if we dive in?"</b></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">2</div>
+    <div class="body">
+      <div class="headrow"><h3>Set the Agenda <span class="arw">&rarr;</span> take control</h3><div class="tag">Get the yes</div></div>
+      <p>"I'll ask a few questions to see if I can actually help. If I can, we explore it. Sound good?" <b>Wait for the yes.</b></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">3</div>
+    <div class="body">
+      <div class="headrow"><h3>Current Situation <span class="arw">&rarr;</span> get the numbers</h3><div class="tag">Write it down</div></div>
+      <p>Why this call? How are you getting customers now? How many a month? Capacity? Revenue? <b>At 100% you'd be at ___?</b></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">4</div>
+    <div class="body">
+      <div class="headrow"><h3>Desired Situation <span class="arw">&rarr;</span> find the why</h3><div class="tag">Their real WHY</div></div>
+      <p>Where do you want to be in 12 months? Revenue, team, your time? <b>"Why not just stay where you are?"</b> Then shut up.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">5</div>
+    <div class="body">
+      <div class="headrow"><h3>Burn the Bridge <span class="arw">&rarr;</span> more pain</h3><div class="tag">Listen: can't / faster / no time</div></div>
+      <p>Play back the gap: you're here, you want there, for [their why]. <b>"What's stopping you from doing this on your own?"</b></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">6</div>
+    <div class="body">
+      <div class="headrow"><h3>Expose the Past <span class="arw">&rarr;</span> kill objections early</h3><div class="tag">Pre-handle</div></div>
+      <p>What have you tried? Did it work? <b>If yes: why not do more? If no: why did it fail?</b> This stops "why haven't you fixed it" later.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">7</div>
+    <div class="body">
+      <div class="headrow"><h3>Summarize + Frame <span class="arw">&rarr;</span> get "yes, that's right"</h3><div class="tag">Lock alignment</div></div>
+      <p>Play their whole situation back. <b>Wait for "yes, that's right."</b> Then: "So the one thing that gets you there is ___, agree?"</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">8</div>
+    <div class="body">
+      <div class="headrow"><h3>Position + Book the Demo <span class="arw">&rarr;</span> the handoff</h3><div class="tag">Book call 2. Do NOT pitch yet.</div></div>
+      <p>"Based on what I'm hearing, I know exactly how to help." Then STOP, let them ask how. One line on what you do, then: <b>"This is easier to show than tell. Next step is a quick demo call."</b> Lock the time now. You do NOT pitch here. The demo call is where you pitch.</p>
+    </div>
+  </div>
+
+  <div class="boxes">
+    <div class="box dark">
+      <div class="bt">Locking the demo (the real close of this call)</div>
+      <ul>
+        <li>Assume it. Offer two times, not "do you want to."</li>
+        <li>Set the frame: 30 to 60 min, computer + quiet room, all decision-makers there.</li>
+        <li>Answer their questions with questions. Stay in control.</li>
+        <li>Record every call with Fathom. Review one a week.</li>
+      </ul>
+    </div>
+    <div class="box amber">
+      <div class="bt">The one objection killer</div>
+      <div class="killer">"What makes you say that?"</div>
+      <div class="kt">Then let them talk themselves through it. Most objections dissolve when said out loud. Don't argue. Ask.</div>
+    </div>
+  </div>
+
+  <footer>TEU &middot; THE ENTREPRENEURSHIP UNIVERSITY &middot; THE CALL COMPASS</footer>
+
+</div>
+</body>
+</html>
