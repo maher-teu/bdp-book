@@ -26,8 +26,8 @@ let current = 0;
 let progress = {}, highlights = [], checklist = {};
 let pendingSel = null;
 let secTimer = null, secCount = 0, secChapterId = null;
-let page = 0, pages = 1, pageDeck = [];
-let saveT, relayoutT, rsT;
+let page = 0, pages = 1, pageStep = 0;
+let saveT, rsT;
 let openVersion = 0, opening = false;
 
 let toastT;
@@ -165,7 +165,7 @@ async function openChapter(i, isResume, toEnd, preserveRatio) {
   setNavigationBusy(true);
 
   clearTimeout(saveT);
-  if (BOOK[current] && pageDeck.length) saveProgress(BOOK[current].id);
+  if (BOOK[current] && $('#flow').childNodes.length) saveProgress(BOOK[current].id);
 
   try {
     const chapterHighlights = await loadHighlights(ch.id);
@@ -180,17 +180,17 @@ async function openChapter(i, isResume, toEnd, preserveRatio) {
     wireContents(source);
     indexBlocks(source);
     applyHighlights(source, chapterHighlights);
+    prepareSectionBreaks(source);
 
     await settleChapterLayout(source);
     if (version !== openVersion) return false;
 
-    const builtPages = paginateSource(source);
+    const builtPages = mountAndPaginate(source);
     if (version !== openVersion) return false;
 
     current = i;
     highlights = chapterHighlights;
-    pageDeck = builtPages;
-    pages = pageDeck.length;
+    pages = builtPages;
     $('#pg-total').textContent = pages;
     $('#bar-title').textContent = ch.title;
     buildChapterList();
@@ -274,150 +274,66 @@ function loadBookImage(img) {
   });
 }
 
-function paginateSource(source) {
-  const pager = $('#pager');
-  const flow = $('#flow');
-  const width = Math.max(260, Math.min(pager.clientWidth - 48, 620));
-  const height = Math.max(260, pager.clientHeight - 14);
-  const left = Math.round((pager.clientWidth - width) / 2);
-
-  flow.style.width = width + 'px';
-  flow.style.left = left + 'px';
-  document.documentElement.style.setProperty('--pageh', height + 'px');
-
-  const measure = document.createElement('div');
-  measure.className = 'flow flow-measure';
-  measure.style.width = width + 'px';
-  measure.style.height = height + 'px';
-  measure.style.left = left + 'px';
-  pager.appendChild(measure);
-
-  const deck = [];
-  let active = null;
-
-  const meaningful = node => node.nodeType === 1 || (node.nodeType === 3 && node.textContent.trim());
-  const hasContent = el => Array.from(el.childNodes).some(meaningful);
-  const isHeading = node => node && node.nodeType === 1 &&
-    (node.matches('h1,h2,h3,.chnum,.chtitle,.action-kicker,.action-title'));
-  const overflows = () => active && active.scrollHeight > active.clientHeight + 2;
-  const splittable = node => node && node.nodeType === 1 &&
-    !node.matches('p,h1,h2,h3,img,svg,.imgw,.step,.stepline,.guarantee,.linkbox,.giftbox') &&
-    Array.from(node.childNodes).filter(meaningful).length > 1;
-
-  function startPage() {
-    active = document.createElement('section');
-    active.className = 'book-page';
-    measure.appendChild(active);
-  }
-
-  function finishPage() {
-    if (!active) return;
-    active.remove();
-    if (hasContent(active)) deck.push(active);
-    active = null;
-  }
-
-  function splitAcrossPages(node) {
-    const children = Array.from(node.childNodes).filter(meaningful);
-    let shell = null;
-    let first = true;
-
-    const makeShell = () => {
-      shell = node.cloneNode(false);
-      if (!first) shell.classList.add('page-continuation');
-      first = false;
-      active.appendChild(shell);
-    };
-
-    makeShell();
-    children.forEach(child => {
-      shell.appendChild(child);
-      if (!overflows()) return;
-
-      shell.removeChild(child);
-      if (hasContent(shell)) {
-        finishPage();
-        startPage();
-        makeShell();
-      }
-      shell.appendChild(child);
-
-      if (overflows() && splittable(child)) {
-        shell.removeChild(child);
-        finishPage();
-        startPage();
-        addBlock(child);
-        if (!active) startPage();
-        makeShell();
-      }
-    });
-  }
-
-  function addBlock(node) {
-    if (!meaningful(node)) return;
-    if (node.nodeType === 1 && node.classList.contains('pagebreak')) {
-      if (active && hasContent(active)) finishPage();
-      if (!active) startPage();
-      return;
-    }
-    if (!active) startPage();
-
-    active.appendChild(node);
-    if (!overflows()) return;
-    active.removeChild(node);
-
-    const children = Array.from(active.childNodes).filter(meaningful);
-    const trailing = children[children.length - 1];
-    let carriedHeading = null;
-    if (isHeading(trailing) && children.length > 1) {
-      carriedHeading = trailing;
-      active.removeChild(trailing);
-    }
-
-    if (hasContent(active)) finishPage();
-    else { active.remove(); active = null; }
-    startPage();
-    if (carriedHeading) active.appendChild(carriedHeading);
-    active.appendChild(node);
-
-    if (!overflows()) return;
-    active.removeChild(node);
-    if (splittable(node)) {
-      splitAcrossPages(node);
-    } else {
-      active.appendChild(node);
-      active.classList.add('page-overflow');
-    }
-  }
-
-  startPage();
-  Array.from(source.childNodes).forEach(addBlock);
-  finishPage();
-  measure.remove();
-
-  if (!deck.length) {
-    const empty = document.createElement('section');
-    empty.className = 'book-page';
-    deck.push(empty);
-  }
-  return deck;
+function prepareSectionBreaks(source) {
+  source.querySelectorAll('.pagebreak').forEach(marker => {
+    const next = marker.nextElementSibling;
+    if (next) next.classList.add('section-start');
+    marker.remove();
+  });
 }
 
-function relayoutSoon() {
-  clearTimeout(relayoutT);
-  relayoutT = setTimeout(relayout, 180);
+function mountAndPaginate(source) {
+  const flow = $('#flow');
+  flow.style.transform = 'translate3d(0,0,0)';
+  flow.replaceChildren(...source.childNodes);
+  return layoutFlow();
+}
+
+function layoutFlow() {
+  const pager = $('#pager');
+  const flow = $('#flow');
+  const viewportWidth = pager.clientWidth;
+  const width = Math.max(260, Math.min(viewportWidth - 48, 620));
+  const height = Math.max(260, pager.clientHeight - 18);
+  const gap = Math.max(48, viewportWidth - width);
+  const left = Math.round((viewportWidth - width) / 2);
+
+  flow.style.transform = 'translate3d(0,0,0)';
+  flow.style.width = width + 'px';
+  flow.style.height = height + 'px';
+  flow.style.left = left + 'px';
+  flow.style.columnWidth = width + 'px';
+  flow.style.webkitColumnWidth = width + 'px';
+  flow.style.columnGap = gap + 'px';
+  flow.style.webkitColumnGap = gap + 'px';
+  pageStep = width + gap;
+  document.documentElement.style.setProperty('--pageh', height + 'px');
+
+  // WebKit and Chromium disagree about whether scrollWidth includes the final
+  // column gap. Reading the rendered fragments gives an exact count in both.
+  const origin = flow.getBoundingClientRect().left;
+  let lastColumn = 0;
+  Array.from(flow.children).forEach(child => {
+    Array.from(child.getClientRects()).forEach(rect => {
+      if (rect.width < 1 || rect.height < 1) return;
+      lastColumn = Math.max(lastColumn, Math.round((rect.left - origin) / pageStep));
+    });
+  });
+  return lastColumn + 1;
 }
 
 function relayout() {
-  if (opening || !BOOK[current]) return;
+  if (opening || !BOOK[current] || !$('#flow').childNodes.length) return;
   const ratio = pages > 1 ? page / (pages - 1) : 0;
-  openChapter(current, false, false, ratio);
+  pages = layoutFlow();
+  $('#pg-total').textContent = pages;
+  goTo(Math.round(ratio * (pages - 1)));
 }
 
 function goTo(i) {
-  if (opening || !pageDeck.length) return;
+  if (opening || !$('#flow').childNodes.length) return;
   page = Math.max(0, Math.min(pages - 1, i));
-  $('#flow').replaceChildren(pageDeck[page]);
+  $('#flow').style.transform = 'translate3d(' + (-page * pageStep) + 'px,0,0)';
   $('#pg-now').textContent = page + 1;
   const p = pages > 1 ? page / (pages - 1) : 1;
   $('#spine-fill').style.height = (p * 100) + '%';
@@ -540,6 +456,7 @@ function transformSteps(root, chapterId) {
 }
 function transformCTA(root) {
   root.querySelectorAll('.resbox').forEach(box => {
+    if (box.querySelectorAll('.ritem').length > 2) box.classList.add('resbox-dense');
     box.querySelectorAll('.rn').forEach(nameEl => {
       const url = RESOURCE_LINKS[nameEl.textContent.trim()];
       if (!url) return;

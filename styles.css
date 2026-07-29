@@ -243,13 +243,23 @@ table.adm td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-alig
 /* ---------- the paged book ---------- */
 .reader{position:fixed;top:calc(var(--bar-h) + env(safe-area-inset-top));left:0;right:0;bottom:0;display:flex;flex-direction:column}
 .pager{position:relative;flex:1;overflow:hidden}
-.flow{position:absolute;top:10px;bottom:4px;overflow:hidden;font-size:17.5px;line-height:1.62;transition:opacity .12s ease}
+.flow{
+  position:absolute;top:10px;bottom:auto;overflow:visible;
+  column-fill:auto;-webkit-column-fill:auto;
+  font-size:17px;line-height:1.56;
+  transition:transform .16s ease-out,opacity .12s ease;
+  will-change:transform
+}
 .flow.is-loading{opacity:.42}
-.flow-measure{top:0;bottom:auto;visibility:hidden;pointer-events:none;z-index:-1;overflow:hidden;transition:none}
-.book-page{width:100%;height:100%;overflow:hidden}
-.book-page.page-overflow{overflow-y:auto;overscroll-behavior:contain}
-.page-continuation.action-wrap{margin-top:0;padding-top:0;border-top:none}
-.page-continuation.resbox,.page-continuation.partbox,.page-continuation.toc{margin-top:0}
+.flow p{margin-bottom:14px;orphans:2;widows:2}
+.flow h2,.flow h3,.chnum,.chtitle,.action-kicker,.action-title,.qa .qq{
+  break-after:avoid-column;-webkit-column-break-after:avoid
+}
+.imgw,.pullq,.defbox,.deftag,.aside,.script,.protip,.step,.resbox,.filter,
+.guarantee,.linkbox,.giftbox,.stepline,.anG,.anW,.dict,.toc .tr,.ritem,table.abt td{
+  break-inside:avoid-column;-webkit-column-break-inside:avoid
+}
+.partbox{box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .spine{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--paper-2);z-index:5}
 .spine-fill{width:100%;height:0;background:linear-gradient(180deg,var(--gold-lt),var(--gold));transition:height .26s}
 
@@ -259,7 +269,7 @@ table.adm td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-alig
 
 
 
-.imgw img{max-height:46vh;object-fit:contain;background:#fff}
+.imgw img{max-height:42vh;object-fit:contain;background:#fff}
 .imgw{margin:16px 0;border-radius:8px;overflow:hidden}
 
 /* the print-only pages, restored and sized for a screen */
@@ -301,6 +311,9 @@ ul.chk li:before{content:"\2713";position:absolute;left:0;color:var(--gold);font
 
 /* ---------- real page breaks, exactly like the print edition ---------- */
 .pagebreak{display:none}
+.section-start{break-before:column;-webkit-column-break-before:always}
+.section-start:is(h2,h3){margin-top:0}
+.action-wrap.section-start{margin-top:0;padding-top:0;border-top:none}
 
 /* front matter pages, each one alone and centred like the PDF */
 .title-page,.copyright-page,.dedication{
@@ -340,3 +353,9 @@ ul.chk li:before{content:"\2713";position:absolute;left:0;color:var(--gold);font
 .reslink{display:inline-block;margin-top:7px;background:var(--gold-lt);color:var(--ink);
   font-family:var(--sans);font-weight:700;font-size:13px;padding:7px 14px;border-radius:8px;text-decoration:none}
 .ritem .reslink{margin-top:8px}
+.resbox-dense{padding:13px 15px;margin:18px 0}
+.resbox-dense .rk{font-size:9.5px;margin-bottom:6px}
+.resbox-dense .ritem{margin-top:7px;padding-top:7px}
+.resbox-dense .rn{font-size:14.5px;line-height:1.25;margin-bottom:2px}
+.resbox-dense .rd{font-size:12.25px;line-height:1.35}
+.resbox-dense .reslink{margin-top:5px;padding:5px 10px;font-size:11.5px}
